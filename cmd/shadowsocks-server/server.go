@@ -259,8 +259,9 @@ func (pm *PasswdManager) getTrafficStats() map[string]int64 {
 	for k, v := range pm.trafficStats {
 		if v != 0{
 			copy[k] = v
+			pm.trafficStats[k] = 0
 		}
-		copy[k] = v
+		// copy[k] = v
 	}
 	pm.Unlock()
 	return copy
@@ -520,23 +521,23 @@ func managerDaemon(conn *net.UDPConn) {
 	ctx := make(chan bool, 1)
 	defer close(ctx)
 	reportconnSet := make(map[string]*net.UDPAddr, 1024)
-	go func() {
-		timer := time.Tick(10 * time.Second)
-		for {
-			select {
-			case <-ctx:
-				return
-			case <-timer:
-				for _, addr := range reportconnSet {
-					res := reportStat()
-					if len(res) == 0 {
-						continue
-					}
-					conn.WriteToUDP(res, addr)
-				}
-			}
-		}
-	}()
+	// go func() {
+	// 	timer := time.Tick(10 * time.Second)
+	// 	for {
+	// 		select {
+	// 		case <-ctx:
+	// 			return
+	// 		case <-timer:
+	// 			for _, addr := range reportconnSet {
+	// 				res := reportStat()
+	// 				if len(res) == 0 {
+	// 					continue
+	// 				}
+	// 				conn.WriteToUDP(res, addr)
+	// 			}
+	// 		}
+	// 	}
+	// }()
 
 	for {
 		data := make([]byte, 300)
@@ -560,6 +561,7 @@ func managerDaemon(conn *net.UDPConn) {
 			delete(reportconnSet, remote.String())
 		case strings.HasPrefix(command, "flow"):
 			res = reportStat()
+			conn.WriteToUDP(res, remote)
 		}
 		if len(res) == 0 {
 			continue
