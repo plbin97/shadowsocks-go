@@ -230,7 +230,6 @@ func handleUDPConnection(handle *SecurePacketConn, n int, src net.Addr, receive 
 	}
 	remote.SetDeadline(time.Now().Add(udpTimeout))
 	n, err = remote.WriteTo(receive[reqLen:n], dst)
-	addTraffic(n)
 	if err != nil {
 		if ne, ok := err.(*net.OpError); ok && (ne.Err == syscall.EMFILE || ne.Err == syscall.ENFILE) {
 			// log too many open file error
@@ -242,9 +241,10 @@ func handleUDPConnection(handle *SecurePacketConn, n int, src net.Addr, receive 
 		if conn := natlist.Delete(src.String()); conn != nil {
 			conn.Close()
 		}
+		return
 	}
+	addTraffic(n)
 	// Pipeloop
-	return
 }
 
 func ReadAndHandleUDPReq(c *SecurePacketConn, addTraffic func(int)) error {

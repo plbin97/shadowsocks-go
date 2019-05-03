@@ -19,7 +19,7 @@ import (
 	"syscall"
 	"time"
 
-	ss "github.com/shadowsocks/shadowsocks-go/shadowsocks"
+	ss "../../shadowsocks"
 )
 
 const (
@@ -257,6 +257,9 @@ func (pm *PasswdManager) getTrafficStats() map[string]int64 {
 	pm.Lock()
 	copy := make(map[string]int64)
 	for k, v := range pm.trafficStats {
+		if v != 0{
+			copy[k] = v
+		}
 		copy[k] = v
 	}
 	pm.Unlock()
@@ -344,11 +347,18 @@ func waitSignal() {
 }
 
 func run(port, password string) {
-	ln, err := net.Listen("tcp", ":"+port)
-	if err != nil {
+	var ln net.Listener
+	for{
+		var err error 
+		ln, err = net.Listen("tcp", ":"+port)
+		if err == nil {
+			break
+		}
 		log.Printf("error listening port %v: %v\n", port, err)
-		os.Exit(1)
+		time.Sleep(time.Second * 1)
 	}
+	// ln, err := net.Listen("tcp", ":"+port)
+
 	passwdManager.add(port, password, ln)
 	var cipher *ss.Cipher
 	log.Printf("server listening port %v ...\n", port)
@@ -548,6 +558,8 @@ func managerDaemon(conn *net.UDPConn) {
 		case strings.HasPrefix(command, "ping-stop"): // add the stop ping command
 			conn.WriteToUDP(handlePing(), remote)
 			delete(reportconnSet, remote.String())
+		case strings.HasPrefix(command, "flow"):
+			res = reportStat()
 		}
 		if len(res) == 0 {
 			continue
