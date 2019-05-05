@@ -152,12 +152,18 @@ func Pipeloop(write net.PacketConn, writeAddr net.Addr, readClose net.PacketConn
 		}
 		// need improvement here
 		if req, ok := reqList.Get(raddr.String()); ok {
-			n, _ := write.WriteTo(append(req, buf[:n]...), writeAddr)
-			addTraffic(n)
+			n, err := write.WriteTo(append(req, buf[:n]...), writeAddr)
+			if err == nil{
+				addTraffic(n)
+			}
+			// addTraffic(n)
 		} else {
 			header, hlen := parseHeaderFromAddr(raddr)
-			n, _ := write.WriteTo(append(header[:hlen], buf[:n]...), writeAddr)
-			addTraffic(n)
+			n, err := write.WriteTo(append(header[:hlen], buf[:n]...), writeAddr)
+			if err == nil{
+				addTraffic(n)
+			}
+			// addTraffic(n)
 		}
 	}
 }
