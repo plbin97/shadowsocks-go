@@ -235,6 +235,13 @@ func handleUDPConnection(handle *SecurePacketConn, n int, src net.Addr, receive 
 		fmt.Println("WTF")
 	}
 	remote.SetDeadline(time.Now().Add(udpTimeout))
+
+	Debug.Printf("[udp]receive1 %d", len(receive))
+	Debug.Printf("[udp]receive2 %d,%d", reqLen,n)
+	if reqLen >=n {
+		Debug.Printf("[udp]discard,%s", src.String())
+		return
+	}
 	n, err = remote.WriteTo(receive[reqLen:n], dst)
 	if err != nil {
 		if ne, ok := err.(*net.OpError); ok && (ne.Err == syscall.EMFILE || ne.Err == syscall.ENFILE) {
